@@ -27,16 +27,15 @@ class SuperClass
     #p user
     self.new(user.first)
   end
-end
-
-class User
 
   def self.all
-    data = QuestionsDatabase.instance.execute("SELECT * FROM users")
-    data.map { |datum| User.new(datum) }
+    table = self.tableize
+    data = QuestionsDatabase.instance.execute("SELECT * FROM #{table}")
+    data.map { |datum| self.new(datum) }
   end
+end
 
-
+class User < SuperClass
 
   attr_accessor :fname, :lname
   attr_reader :id
@@ -92,44 +91,10 @@ class User
     karma.first.values.first
   end
 
-  def save
-    if @id
-      QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname, @id)
-        UPDATE
-          users (id, fname, lname)
-        SET
-          fname = ?, lname = ?
-        WHERE
-          id = ?
-      SQL
-    else
-      QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname)
-        INSERT INTO
-          users (fname, lname)
-        VALUES
-          (?, ?)
-      SQL
-
-      @id = QuestionsDatabase.instance.last_insert_row_id
-    end
-  end
-
 end
 
-class Question
+class Question < SuperClass
 
-  def self.find_by_id(id)
-    question = QuestionsDatabase.instance.execute(<<-SQL, id)
-      SELECT
-        *
-      FROM
-        questions
-      WHERE
-        id = ?
-    SQL
-
-    Question.new(question.first)
-  end
 
   attr_accessor :title, :body, :user_id
   attr_reader :id
@@ -209,21 +174,8 @@ class Question
 
 end
 
-class QuestionFollow
+class QuestionFollow < SuperClass
 
-  def self.find_by_id(id)
-
-    follows = QuestionsDatabase.instance.execute(<<-SQL, id)
-      SELECT
-        *
-      FROM
-        questions_follows
-      WHERE
-        id = ?
-    SQL
-
-    QuestionFollow.new(follows.first)
-  end
 
   attr_accessor :question_id, :user_id
   attr_reader :id
@@ -422,21 +374,7 @@ class Reply
 
 end
 
-class QuestionLike
-
-  def self.find_by_id(id)
-
-    like = QuestionsDatabase.instance.execute(<<-SQL, id)
-      SELECT
-        *
-      FROM
-        questions_likes
-      WHERE
-        id = ?
-    SQL
-
-    QuestionLike.new(like.first)
-  end
+class QuestionLike < SuperClass
 
   attr_accessor :question_id, :user_id
   attr_reader :id
